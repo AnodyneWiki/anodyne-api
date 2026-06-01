@@ -1,4 +1,4 @@
-module main
+module anodyne-api
 
 go 1.24.4
 
