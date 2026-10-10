@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,6 +30,7 @@ var (
 	userHook      = ""
 	metrics       = "http://localhost:2019/metrics"
 	db            *sql.DB
+	dbPath        = "db.sqlite"
 	dbMutex       sync.RWMutex
 	reloadEvery   = 5 * time.Minute
 	monitorPeriod = 30 * 24 * 60 * 60
@@ -157,6 +159,9 @@ func round(val float64, precision int) float64 {
 }
 
 func main() {
+	flag.StringVar(&dbPath, "db", dbPath, "path to the SQLite database")
+	port := flag.Int("port", 8080, "port to listen on")
+	flag.Parse()
 	if err := godotenv.Load(); err != nil {
 		log.Println("no .env file found, relying on real env vars")
 	}
@@ -435,11 +440,11 @@ func main() {
 		fmt.Println("Request send: " + input)
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), r))
 }
 
 func loadDB() error {
-	newDB, err := sql.Open("sqlite3", "file:db.sqlite?_journal_mode=WAL&_busy_timeout=5000")
+	newDB, err := sql.Open("sqlite3", "file:"+dbPath+"?_journal_mode=WAL&_busy_timeout=5000")
 	if err != nil {
 		return err
 	}
